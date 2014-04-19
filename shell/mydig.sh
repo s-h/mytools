@@ -71,4 +71,6 @@ else
 	echo "#yum install bind-utils"
 	echo "Gentoo:"
 	echo "#emerge bind-tools"
+	echo "Debain/Ubuntu:"
+	echo "#apt-get install dnsutils"
 fi
