@@ -46,7 +46,7 @@ help () {
 	echo "Usage:`basename $0` [-l] url"  
 	echo "e.g. :"
 	echo " `basename $0` www.google.com"
-	echo " `basename $0` -s www.google.com"
+	echo " `basename $0` -l www.google.com"
 }
 if [ -e "/usr/bin/dig" ];then
 	case $1 in
