@@ -28,7 +28,7 @@ init () {
         echo 1 > /proc/sys/net/ipv4/tcp_window_scaling
         echo 1 >  /proc/sys/net/ipv4/ip_forward
         iptables -t filter -F
-
+	modprobe ip_nat_pptp		#支持pptp透传
         for ipmask in "${useradd[@]}";do
                 route add -net $ipmask gw $GW_LAN dev $DEV_LAN
                 iptables -t nat -A POSTROUTING -s $ipmask -o $DEV_WAN -j SNAT --to-source $NAT_IP_POOL
