@@ -2,7 +2,7 @@
 # 子接口ip ping检测
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
-source="221.11.109"
+source="x.x.x"
 test_ip="202.99.160.68"
 for sitenu in $(seq 33 62)
 do
