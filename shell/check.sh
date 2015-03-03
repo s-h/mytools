@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -f
 cd /root/kong
 TXT=/root/bgp.txt
 dos2unix $TXT &>/dev/null
