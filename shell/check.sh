@@ -9,15 +9,15 @@ trace () {
         traceroute -n -m 4 $ip > /tmp/tracert.txt
 	cat /tmp/tracert.txt >> /tmp/tracert.txt.log
         txt=`grep " 3  " /tmp/tracert.txt |sed -e 's/ 3  //g' -e 's/\s.*//g'`
-        if [ $txt = 10.115.239.9 ];then
+        if [ $txt = 10.115.xxx.xxx ];then
                 echo "$ip ----> BGP"
-	elif [ $txt = 14.197.242.57 ];then
+	elif [ $txt = 14.197.xxx.xxx ];then
                 echo "$ip ----> 大网"
-        elif [ $txt = 14.197.242.33 ];then
+        elif [ $txt = 14.197.xxx.xxx ];then
                 echo "$ip ----> 大网"
-        elif [ $txt = 14.197.250.69 ];then
+        elif [ $txt = 14.197.xxx.xxx ];then
                 echo "$ip ----> 大网"
-        elif [ $txt = 10.40.0.178 ];then
+        elif [ $txt = 10.40.xxx.xxx ];then
                 echo "$ip ----> bgp_nat"
         else
                 echo "$ip ----> $txt"
