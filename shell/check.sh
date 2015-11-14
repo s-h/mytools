@@ -5,11 +5,11 @@
 set -f
 TXT=$1
 tag2=(
-10.15.245.45#BGP
+x.x.x.x#BGP
 )
 tag3=(
-10.40.0.178#BGP-NAT-178
-10.40.0.206#BGP-NAT-206
+x.x.x.x#BGP-NAT-178
+x.x.x.x#BGP-NAT-206
 )
 
 function color_red (){
