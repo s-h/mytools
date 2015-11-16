@@ -28,6 +28,7 @@ trace () {
                         tag_description_2=`echo $i|sed 's/.*#//g'`
                         if [ $TxtTag2 == $tag_ip_2 ];then
                                 txt2=`color_red $tag_description_2`
+                                break
                         else
                                 txt2=$TxtTag2
                         fi
@@ -37,6 +38,7 @@ trace () {
                         tag_description_3=`echo $i|sed 's/.*#//g'`
                         if [ $TxtTag3 == $tag_ip_3 ];then
                                 txt3=`color_red $tag_description_3`
+                                break
                         else
                                 txt3=$TxtTag3
                         fi
