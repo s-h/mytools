@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 '''
-这是一个自动抓去cacti图片的脚本
+这是一个自动抓取cacti图片的脚本
 ver 2014-11-5
 '''
 import os
