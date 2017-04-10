@@ -141,4 +141,3 @@ elif sys.argv[1] == "getstatus":
 
 elif sys.argv[1] == "test":
     readLastFile()
- jianghao  ~  bin
