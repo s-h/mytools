@@ -49,7 +49,8 @@ iptables -A INPUT -i lo -j ACCEPT"""
         if localUdpPort:
             printUdpRule(localUdpPort)
     if options.log is True:
-        print "iptables -A INPUT -j LOG --log-prefix 'iptables-debug-log:'"
+        print "iptables -A INPUT -m state --state INVALID -j LOG --log-prefix 'iptables-INVALID-log:'"
+        print "iptables -A INPUT -j LOG --log-prefix 'iptables-drop-log:'"
 
     if options.log is not True:
         print """iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited 
