@@ -1,28 +1,23 @@
 #!/usr/bin/env bash
-#zabbix备份脚本
-#https://github.com/s-h/mytools/shell/zabbixbak.sh
-logfile="/opt/backup/zabbixbak.log"
-pidfile="/opt/backup/zabbixbak.pid"
+#my备份脚本
+#https://github.com/s-h/mytools/shell/mybak.sh
+logfile="/opt/backup/mybak.log"
+#pidfile="/opt/backup/mybak.pid"
 today=$(date +%Y%m%d)
 
 backupdir="/opt/backup/$today"
-tmpdir="/tmp/zabbixbaktmp$today"
+tmpdir="/tmp/mybaktmp$today"
 backupfile=(
-/etc/zabbix/zabbix_server.conf
-/etc/zabbix/zabbix_agentd.conf
-/etc/zabbix/zabbix_agentd.d/
-/etc/grafana/grafana.ini
-/etc/my.cnf
-/etc/php.ini
-/etc/zabbix/scripts/
-/usr/lib/zabbix/alertscripts
-/etc/orabbix/conf/
+/etc/my/my_server.conf
+/etc/my/my_agentd.conf
+/etc/my/my_agentd.d/
 )
 
 mysqlUser="root"
 mysqlPwd="youpassword"
+host="127.0.0.1"
 mysqlDatabase=(
-zabbix
+mydatabase
 grafana
 )
 
@@ -30,18 +25,18 @@ function thisTime() {
     echo $(date +%Y%m%d-%H%M%S)
 }
 
-function pid() {
-    if [ $1 == "start" ];then
-        if [ -e $pidfile ];then
-            echo "$pidfile 已存在"
-            exit 1
-        else
-            ps -ef |grep $0 |grep -v grep| awk '{print $2}' > $pidfile
-        fi
-    elif [ $1 == "stop" ];then
-        rm -f $pidfile
-    fi
-}
+# function pid() {
+#     if [ $1 == "start" ];then
+#         if [ -e $pidfile ];then
+#             echo "$pidfile 已存在"
+#             exit 1
+#         else
+#             ps -ef |grep $0 |grep -v grep| awk '{print $2}' > $pidfile
+#         fi
+#     elif [ $1 == "stop" ];then
+#         rm -f $pidfile
+#     fi
+# }
 
 function logger() {
     time=$(thisTime)
@@ -74,13 +69,13 @@ function cpbakfile() {
 
 function tarfile() {
     cd $tmpdir && cd ..
-    tar czpf zabbix_file_bak.$today.tar.gz zabbixbaktmp$today
+    tar czpf my_file_bak.$today.tar.gz mybaktmp$today
     rm -rf $tmpdir
-    mv zabbix_file_bak.$today.tar.gz $backupdir
+    mv my_file_bak.$today.tar.gz $backupdir
 }
 function getMysqlValue () {
-    mysqlMAP=$(mysql -u$mysqlUser -p$mysqlPwd -e "show variables like 'max_allowed_packet';" 2>/dev/null |grep max_allowed_packet | awk {'print $2'})
-    mysqlNBL=$(mysql -u$mysqlUser -p$mysqlPwd -e "show variables like 'net_buffer_length';" 2>/dev/null |grep net_buffer_length | awk {'print $2'})
+    mysqlMAP=$(mysql -h$host -u$mysqlUser -p$mysqlPwd -e "show variables like 'max_allowed_packet';" 2>/dev/null |grep max_allowed_packet | awk {'print $2'})
+    mysqlNBL=$(mysql -h$host -u$mysqlUser -p$mysqlPwd -e "show variables like 'net_buffer_length';" 2>/dev/null |grep net_buffer_length | awk {'print $2'})
     if [ "$mysqlMAP"x = "x" ];then
         logger "mysql max_allowed_packet is empty"
     else
@@ -94,7 +89,7 @@ function getMysqlValue () {
     fi
 }
 function mysqlping() {
-    mysqlPingCmd=$(mysqladmin -u$mysqlUser -p$mysqlPwd ping 2>/dev/null)
+    mysqlPingCmd=$(mysqladmin -h$host -u$mysqlUser -p$mysqlPwd ping 2>/dev/null)
     mysqlOk="mysqld is alive"
     if [ "$mysqlPingCmd"x != "$mysqlOk"x ];then
         mysqlStatus="failed"
@@ -106,7 +101,7 @@ function bakmysql() {
     mysqlping
     if [ "$mysqlStatus"x = "ok"x ];then
         for database in ${mysqlDatabase[@]};do
-                mysqldump -u$mysqlUser -p$mysqlPwd $database -e --max_allowed_packet=$mysqlMAP --net_buffer_length=$mysqlNBL  | bzip2 -9 > $backupdir/mysql-$database-$today.bz2 2>/dev/null
+                mysqldump -h$host -u$mysqlUser -p$mysqlPwd $database -e --max_allowed_packet=$mysqlMAP --net_buffer_length=$mysqlNBL  | bzip2 -9 > $backupdir/mysql-$database-$today.bz2 2>/dev/null
                 logger "mysql $database backup is ok"
        done
    else
@@ -117,10 +112,10 @@ function bakmysql() {
 mkdir $backupdir
 mkdir $tmpdir
 
-pid start
+#pid start
 logger "--------$0开始执行------"
 cpbakfile
 tarfile
 getMysqlValue
 bakmysql
-pid stop
+#pid stop
