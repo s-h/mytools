@@ -1,43 +1,30 @@
 #!/usr/bin/env bash
-#my备份脚本
+# mysql备份脚本，使用mysqldump，在不适用xtrabackup时使用
+# ver 20201113
 #https://github.com/s-h/mytools/shell/mybak.sh
-logfile="/opt/backup/mybak.log"
+logfile="/backup/mybak.log"
 #pidfile="/opt/backup/mybak.pid"
 today=$(date +%Y%m%d)
-
-backupdir="/opt/backup/$today"
-tmpdir="/tmp/mybaktmp$today"
+backupdir="/backup/data/$today"
+tmpdir="/backup/tmp/mybaktmp$today"
+# 备份文件
 backupfile=(
-/etc/my/my_server.conf
-/etc/my/my_agentd.conf
-/etc/my/my_agentd.d/
+file
+/dir/
 )
-
-mysqlUser="root"
-mysqlPwd="youpassword"
+#mysqladmin命令指向
+mysqladmin="mysqladmin"
+mysqlUser="mysqluser"
+mysqlPwd="pasword"
 host="127.0.0.1"
+#备份数据库
 mysqlDatabase=(
-mydatabase
-grafana
+databasename
 )
 
 function thisTime() {
     echo $(date +%Y%m%d-%H%M%S)
 }
-
-# function pid() {
-#     if [ $1 == "start" ];then
-#         if [ -e $pidfile ];then
-#             echo "$pidfile 已存在"
-#             exit 1
-#         else
-#             ps -ef |grep $0 |grep -v grep| awk '{print $2}' > $pidfile
-#         fi
-#     elif [ $1 == "stop" ];then
-#         rm -f $pidfile
-#     fi
-# }
-
 function logger() {
     time=$(thisTime)
     echo "[$time] $1" >> $logfile
@@ -45,7 +32,8 @@ function logger() {
 function mktarget() {
     target=$(dirname $1)
     if [ ! -d $tmpdir$target ];then 
-        mkdir -p $tmpdir$target      #创建目标目录
+        #创建目标目录
+        mkdir -p $tmpdir$target  
     fi
 }
 function cpbakfile() {
@@ -66,7 +54,6 @@ function cpbakfile() {
     done
 
 }
-
 function tarfile() {
     cd $tmpdir && cd ..
     tar czpf my_file_bak.$today.tar.gz mybaktmp$today
@@ -89,10 +76,10 @@ function getMysqlValue () {
     fi
 }
 function mysqlping() {
-    mysqlPingCmd=$(mysqladmin -h$host -u$mysqlUser -p$mysqlPwd ping 2>/dev/null)
+    mysqlPingCmd=$($mysqladmin -h$host -u$mysqlUser -p$mysqlPwd ping 2>>$logfile)
     mysqlOk="mysqld is alive"
     if [ "$mysqlPingCmd"x != "$mysqlOk"x ];then
-        mysqlStatus="failed"
+        mysqlStatus="bad"
     else
         mysqlStatus="ok"
     fi
@@ -101,21 +88,32 @@ function bakmysql() {
     mysqlping
     if [ "$mysqlStatus"x = "ok"x ];then
         for database in ${mysqlDatabase[@]};do
-                mysqldump -h$host -u$mysqlUser -p$mysqlPwd $database -e --max_allowed_packet=$mysqlMAP --net_buffer_length=$mysqlNBL  | bzip2 -9 > $backupdir/mysql-$database-$today.bz2 2>/dev/null
-                logger "mysql $database backup is ok"
-       done
+            echo "$database 开始备份"
+            # --master-data --single-transaction
+            # pass
+            # --max_allowed_packet --net_buffer_length
+            # pass
+            mysqldump -h$host -u$mysqlUser -p$mysqlPwd $database \
+                --master-data --single-transaction \
+                -e --max_allowed_packet=$mysqlMAP --net_buffer_length=$mysqlNBL  \
+                > $backupdir/mysql-$database-$today.sql 2>>$logfile && backupStatus="ok" || backupStatus="bad"
+            if [ $backupStatus = "ok" ];then
+                bzip2 $backupdir/mysql-$database-$today.sql
+	            logger "$database backup ok" 
+            else
+                logger "$database backup bad"
+            fi
+        done
    else
-       logger "msyql backup failed!"
+        logger "msyql status is bad!"
    fi
 }
 
-mkdir $backupdir
-mkdir $tmpdir
+mkdir -p $backupdir
+mkdir -p $tmpdir
 
-#pid start
 logger "--------$0开始执行------"
 cpbakfile
 tarfile
 getMysqlValue
 bakmysql
-#pid stop
