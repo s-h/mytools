@@ -14,6 +14,8 @@ file
 )
 #mysqladmin命令指向
 mysqladmin="mysqladmin"
+#mysqldump命令指向
+mysqldump="mysqldump"
 mysqlUser="mysqluser"
 mysqlPwd="pasword"
 host="127.0.0.1"
@@ -93,7 +95,7 @@ function bakmysql() {
             # pass
             # --max_allowed_packet --net_buffer_length
             # pass
-            mysqldump -h$host -u$mysqlUser -p$mysqlPwd $database \
+            $mysqldump -h$host -u$mysqlUser -p$mysqlPwd $database \
                 --master-data --single-transaction \
                 -e --max_allowed_packet=$mysqlMAP --net_buffer_length=$mysqlNBL  \
                 > $backupdir/mysql-$database-$today.sql 2>>$logfile && backupStatus="ok" || backupStatus="bad"
