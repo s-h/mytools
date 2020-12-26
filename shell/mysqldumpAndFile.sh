@@ -2,27 +2,38 @@
 # mysql备份脚本，使用mysqldump，在不适用xtrabackup时使用
 # ver 20201113
 #https://github.com/s-h/mytools/shell/mybak.sh
+set -x 
+# 日志文件
 logfile="/backup/mybak.log"
-#pidfile="/opt/backup/mybak.pid"
 today=$(date +%Y%m%d)
+# 备份存放目录
 backupdir="/backup/data/$today"
+# 临时文件
 tmpdir="/backup/tmp/mybaktmp$today"
-# 备份文件
+# 备份文件或目录,如不需备份可为空
 backupfile=(
 file
 /dir/
 )
-#mysqladmin命令指向
+# mysqladmin命令指向
 mysqladmin="mysqladmin"
-#mysqldump命令指向
+# mysqldump命令指向
 mysqldump="mysqldump"
+# 数据库用户
 mysqlUser="mysqluser"
+# 数据库密码
 mysqlPwd="pasword"
+# 数据地址
 host="127.0.0.1"
-#备份数据库
+# 备份数据库
 mysqlDatabase=(
 databasename
 )
+# 是否备份全部数据库(mysqldump --all-databases参数)，确保用户有相应权限
+allDatabase=false
+# 数据库是否启用binlog
+# 开启binlog将启用mysqldump的--master-data --single-transaction参数
+isBinlog=true
 
 function thisTime() {
     echo $(date +%Y%m%d-%H%M%S)
@@ -54,7 +65,6 @@ function cpbakfile() {
             logger "$filename 文件或目录不存在"
         fi
     done
-
 }
 function tarfile() {
     cd $tmpdir && cd ..
@@ -78,6 +88,7 @@ function getMysqlValue () {
     fi
 }
 function mysqlping() {
+    # 使用msyqladmin测试数据库可连接性
     mysqlPingCmd=$($mysqladmin -h$host -u$mysqlUser -p$mysqlPwd ping 2>>$logfile)
     mysqlOk="mysqld is alive"
     if [ "$mysqlPingCmd"x != "$mysqlOk"x ];then
@@ -88,7 +99,13 @@ function mysqlping() {
 }
 function bakmysql() {
     mysqlping
-    if [ "$mysqlStatus"x = "ok"x ];then
+    if [ "isBinlog" = "true"];then
+        extendArgs=" --master-data --single-transaction "
+    else
+        extendArgs=""
+    fi
+    if [ "$mysqlStatus"x = "ok"x ] && [ "$allDatabase"x = "false"x ];then
+    # 单库备份
         for database in ${mysqlDatabase[@]};do
             echo "$database 开始备份"
             # --master-data --single-transaction
@@ -96,7 +113,7 @@ function bakmysql() {
             # --max_allowed_packet --net_buffer_length
             # pass
             $mysqldump -h$host -u$mysqlUser -p$mysqlPwd $database \
-                --master-data --single-transaction \
+                $extendArgs \
                 -e --max_allowed_packet=$mysqlMAP --net_buffer_length=$mysqlNBL  \
                 > $backupdir/mysql-$database-$today.sql 2>>$logfile && backupStatus="ok" || backupStatus="bad"
             if [ $backupStatus = "ok" ];then
@@ -106,7 +123,20 @@ function bakmysql() {
                 logger "$database backup bad"
             fi
         done
-   else
+    elif [ "$mysqlStatus"x = "ok"x ] && [ "$allDatabase"x = "true"x ];then
+    # 所有数据库备份
+        $mysqldump -h$host -u$mysqlUser -p$mysqlPwd --all-databases \
+            $extendArgs \
+            -e --max_allowed_packet=$mysqlMAP --net_buffer_length=$mysqlNBL  \
+            > $backupdir/mysql-alldatabase-$today.sql 2>>$logfile && backupStatus="ok" || backupStatus="bad"
+        if [ $backupStatus = "ok" ];then
+            bzip2 $backupdir/mysql-alldatabase-$today.sql
+            logger "$database backup ok" 
+        else
+            logger "$database backup bad"
+        fi
+    else
+    # 数据库状态监测失败
         logger "msyql status is bad!"
    fi
 }
