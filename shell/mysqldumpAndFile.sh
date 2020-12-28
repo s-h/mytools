@@ -99,7 +99,7 @@ function mysqlping() {
 }
 function bakmysql() {
     mysqlping
-    if [ "isBinlog" = "true"];then
+    if [ "isBinlog" = "true" ];then
         extendArgs=" --master-data --single-transaction "
     else
         extendArgs=""
