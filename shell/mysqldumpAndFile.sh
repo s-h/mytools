@@ -2,7 +2,7 @@
 # mysql备份脚本，使用mysqldump，在不适用xtrabackup时使用
 # ver 20201113
 #https://github.com/s-h/mytools/shell/mybak.sh
-# docker 运行 docker run --rm --name backuptmpdocker -v /backup:/backup mysql:5.7.28 /backup/mysqldumpAndFile.sh >> /tmp/log 2>&1 
+#docker 运行 docker run --rm --name backuptmpdocker -v /backup:/backup mysql:5.7.28 /backup/mysqldumpAndFile.sh >> /tmp/log 2>&1 
 set -x 
 # 日志文件
 logfile="/backup/mybak.log"
